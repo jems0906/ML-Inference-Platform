@@ -9,8 +9,8 @@ services:
     envVars:
       - key: AB_TEST_PERCENTAGE
         value: "0.5"
-      - key: HF_HOME
-        value: "/app/.cache"
+      - key: HF_API_TOKEN
+        sync: false
       - key: REDIS_URL
         fromService:
           type: redis

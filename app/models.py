@@ -1,30 +1,28 @@
 import logging
+import time
 
-from transformers import pipeline
+import requests
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-
-def _load(task: str, model: str, **kwargs):
-    logger.info("Loading model %r for task %r ...", model, task)
-    try:
-        return pipeline(task, model=model, **kwargs)
-    except Exception as exc:
-        logger.error("Failed to load model %r: %s", model, exc)
-        raise RuntimeError(f"Model '{model}' could not be loaded") from exc
+HF_API_BASE = "https://api-inference.huggingface.co/models"
 
 
-model_v1 = _load("sentiment-analysis", settings.model_name_v1)
-model_v2 = _load("sentiment-analysis", settings.model_name_v2)
-chat_model = _load(
-    "text-generation",
-    "microsoft/DialoGPT-small",
-)
-
-MODELS = {
-    "v1": model_v1,
-    "v2": model_v2,
-    "chat": chat_model,
-}
+def hf_post(model: str, payload: dict, retries: int = 3) -> list | dict:
+    """POST to HuggingFace Inference API with automatic retry on model cold-start."""
+    url = f"{HF_API_BASE}/{model}"
+    headers = {"Authorization": f"Bearer {settings.hf_api_token}"}
+    for attempt in range(retries):
+        resp = requests.post(url, headers=headers, json=payload, timeout=30)
+        if resp.status_code == 503:
+            # Model is warming up — HF returns estimated_time in the body
+            wait = min(resp.json().get("estimated_time", 20), 30)
+            logger.warning("Model %r is loading, retrying in %ss (attempt %d/%d)",
+                           model, wait, attempt + 1, retries)
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        return resp.json()
+    raise RuntimeError(f"Model {model!r} unavailable after {retries} retries")

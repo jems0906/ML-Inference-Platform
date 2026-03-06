@@ -15,13 +15,7 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY app/ ./app/
 
-# Store HuggingFace models inside /app/.cache so appuser can access them at runtime
-ENV HF_HOME=/app/.cache
-
-# Pre-download ALL models at build time so the container starts fast
-RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='distilbert-base-uncased-finetuned-sst-2-english'); pipeline('text-generation', model='microsoft/DialoGPT-small'); print('All models cached')"
-
-# Hand ownership of /app (including cached models) to appuser
+# Hand ownership of /app to appuser
 RUN chown -R appuser:appuser /app
 
 USER appuser
