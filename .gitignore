@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables / secrets
+.env
+
+# HuggingFace model cache
+~/.cache/huggingface/
+
+# OS files
+.DS_Store
+Thumbs.db
