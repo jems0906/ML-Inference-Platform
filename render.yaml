@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ml-inference-platform
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    plan: standard          # Standard plan: 2GB RAM — required for ML models
+    healthCheckPath: /health
+    envVars:
+      - key: AB_TEST_PERCENTAGE
+        value: "0.5"
+      - key: HF_HOME
+        value: "/app/.cache"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ml-inference-redis
+          property: connectionString
+
+  - type: redis
+    name: ml-inference-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
