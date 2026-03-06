@@ -21,3 +21,4 @@ services:
     name: ml-inference-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
